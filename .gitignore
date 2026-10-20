@@ -1,0 +1,15 @@
+__pycache__/
+.DS_Store
+# o catalogo nunca leva jogo: nem por engano
+*.gba
+*.nds
+*.nes
+*.sfc
+*.smc
+*.iso
+*.bin
+*.cue
+*.zip
+*.7z
+*.rar
+*.csv

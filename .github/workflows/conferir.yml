@@ -1,0 +1,47 @@
+# No pull request: confere as traducoes (e que o envio so mexe em traducoes/).
+# No main: confere de novo e regrava o index.json que o site le.
+name: conferir
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Envio de fora so mexe em traducoes/
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          fora=$(git diff --name-only HEAD^1 HEAD | grep -v '^traducoes/' || true)
+          if [ -n "$fora" ]; then
+            echo "Este envio mexe fora de traducoes/ (isso e com o mantenedor):"
+            echo "$fora"
+            exit 1
+          fi
+      - run: python3 ferramentas/teste.py
+      - run: python3 ferramentas/conferir.py
+
+  indice:
+    if: github.event_name == 'push'
+    needs: conferir
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 ferramentas/conferir.py --indice index.json
+      - name: Grava o indice
+        run: |
+          git diff --quiet index.json && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "indice: atualizado" index.json
+          git push
